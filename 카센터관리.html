@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>카센터 수리 이력 관리</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:#f5f5f5;color:#1a1a1a;font-size:15px}
+.header{background:#fff;border-bottom:1px solid #e5e5e5;padding:16px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+.header h1{font-size:17px;font-weight:600}
+.header-icon{width:32px;height:32px;background:#1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.notif-btn{margin-left:auto;position:relative;background:none;border:1px solid #e5e5e5;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px}
+.notif-btn:hover{background:#f5f5f5}
+.notif-badge{background:#e53935;color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 6px;display:none}
+.container{max-width:720px;margin:0 auto;padding:24px 16px}
+.tabs{display:flex;gap:0;background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:4px;margin-bottom:20px}
+.tab{flex:1;padding:9px;font-size:14px;cursor:pointer;border-radius:8px;border:none;background:none;color:#888;transition:all 0.15s;font-weight:500}
+.tab.active{background:#1a1a1a;color:#fff}
+.tab:hover:not(.active){background:#f5f5f5;color:#1a1a1a}
+.section{display:none}
+.section.active{display:block}
+.search-box{display:flex;gap:8px;margin-bottom:16px}
+.search-box input{flex:1;font-size:15px;padding:11px 14px;border:1px solid #e5e5e5;border-radius:10px;background:#fff;outline:none}
+.search-box input:focus{border-color:#aaa}
+.search-box button{padding:11px 20px;font-size:14px;font-weight:500;border:none;border-radius:10px;background:#1a1a1a;color:#fff;cursor:pointer}
+.search-box button:hover{opacity:0.85}
+.car-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px;margin-bottom:12px}
+.car-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.car-badge{background:#EBF3FF;color:#1558C0;font-size:13px;font-weight:600;padding:5px 12px;border-radius:8px;letter-spacing:0.5px;white-space:nowrap}
+.car-model{font-size:15px;font-weight:600}
+.car-meta{font-size:13px;color:#888;margin-top:2px}
+.repair-list{display:flex;flex-direction:column;gap:8px}
+.repair-item{background:#f8f8f8;border-radius:8px;padding:12px 14px;position:relative}
+.repair-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.repair-date{font-size:12px;color:#888;white-space:nowrap}
+.repair-content{font-size:14px;flex:1;padding:0 10px;line-height:1.5}
+.repair-price{font-size:14px;font-weight:600;white-space:nowrap}
+.pay-badge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;margin-left:5px;vertical-align:middle}
+.pay-cash{background:#E8F5E9;color:#2E7D32}
+.pay-card{background:#E3F2FD;color:#1565C0}
+.vehicle-warn{font-size:13px;color:#e65100;background:#FFF3E0;border-radius:8px;padding:10px 12px;margin-bottom:14px;display:none}
+.vehicle-search-item{padding:12px 14px;border-bottom:1px solid #f0f0f0;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.vehicle-search-item:last-child{border-bottom:none}
+.vehicle-search-item:hover{background:#f8f8f8}
+.vehicle-search-plate{font-size:13px;font-weight:600;color:#1558C0;background:#EBF3FF;padding:2px 8px;border-radius:5px}
+.vehicle-search-info{font-size:13px;color:#333;margin-top:4px}
+.vehicle-search-date{font-size:12px;color:#aaa;white-space:nowrap;margin-left:8px}
+.repair-note{font-size:12px;color:#1558C0;margin-top:8px;padding:7px 10px;background:#EBF3FF;border-radius:7px;line-height:1.5}
+.repair-actions{display:flex;gap:6px;margin-top:8px}
+.btn-edit{font-size:12px;padding:4px 10px;border:1px solid #e5e5e5;border-radius:6px;background:#fff;cursor:pointer;color:#555}
+.btn-edit:hover{background:#f0f0f0}
+.btn-del{font-size:12px;padding:4px 10px;border:1px solid #fcc;border-radius:6px;background:#fff;cursor:pointer;color:#c62828}
+.btn-del:hover{background:#fff0f0}
+.empty-state{text-align:center;padding:3rem 1rem;color:#aaa;font-size:14px}
+.form-card{background:#fff;border-radius:12px;border:1px solid #e5e5e5;padding:20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:13px;color:#666;font-weight:500}
+.form-group input,.form-group textarea,.form-group select{font-size:14px;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;outline:none;font-family:inherit}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#aaa}
+.form-group textarea{resize:vertical;min-height:80px;line-height:1.5}
+.btn-save{background:#1a1a1a;color:#fff;border:none;padding:12px;font-size:15px;font-weight:600;border-radius:10px;cursor:pointer;width:100%;margin-top:8px}
+.btn-save:hover{opacity:0.85}
+.btn-save:disabled{opacity:0.5;cursor:not-allowed}
+.btn-cancel{background:#f5f5f5;color:#555;border:1px solid #e5e5e5;padding:12px;font-size:15px;font-weight:500;border-radius:10px;cursor:pointer;width:100%;margin-top:8px}
+.btn-cancel:hover{background:#eee}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:14px;text-align:center}
+.stat-num{font-size:24px;font-weight:700}
+.stat-label{font-size:12px;color:#888;margin-top:4px}
+.filter-row{display:flex;gap:8px;margin-bottom:12px}
+.filter-row input,.filter-row select{font-size:13px;padding:9px 12px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;outline:none}
+.filter-row input{flex:1}
+.all-list{display:flex;flex-direction:column;gap:8px}
+.all-item{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:14px;display:flex;gap:12px;align-items:flex-start}
+.all-item-left{display:flex;flex-direction:column;gap:4px;min-width:88px}
+.all-item-plate{font-size:12px;font-weight:600;color:#1558C0;background:#EBF3FF;padding:3px 8px;border-radius:6px;text-align:center}
+.all-item-model{font-size:11px;color:#888;text-align:center}
+.all-item-body{flex:1;min-width:0}
+.all-item-date{font-size:12px;color:#888}
+.all-item-title{font-size:14px;margin:3px 0;line-height:1.4}
+.all-item-note{font-size:12px;color:#1558C0;margin-top:4px}
+.all-item-price{font-size:14px;font-weight:600;white-space:nowrap}
+.all-item-actions{display:flex;gap:6px;margin-top:8px}
+/* 알림 패널 */
+.notif-panel{display:none;position:fixed;top:60px;right:16px;width:320px;background:#fff;border:1px solid #e5e5e5;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.12);z-index:100;max-height:480px;overflow-y:auto}
+.notif-panel.open{display:block}
+.notif-header{padding:14px 16px;border-bottom:1px solid #f0f0f0;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.notif-close{background:none;border:none;font-size:18px;cursor:pointer;color:#aaa;line-height:1}
+.notif-item{padding:12px 16px;border-bottom:1px solid #f5f5f5;display:flex;flex-direction:column;gap:4px}
+.notif-item:last-child{border-bottom:none}
+.notif-item-top{display:flex;justify-content:space-between;align-items:center}
+.notif-plate{font-size:12px;font-weight:600;color:#1558C0;background:#EBF3FF;padding:2px 8px;border-radius:5px}
+.notif-days{font-size:12px;font-weight:600}
+.notif-days.overdue{color:#c62828}
+.notif-days.soon{color:#e65100}
+.notif-name{font-size:13px;font-weight:500}
+.notif-desc{font-size:12px;color:#888}
+.notif-empty{padding:24px;text-align:center;color:#aaa;font-size:13px}
+.notif-dismiss{font-size:11px;padding:3px 8px;border:1px solid #e5e5e5;border-radius:5px;background:#fff;cursor:pointer;color:#888;white-space:nowrap}
+.notif-dismiss:hover{background:#f5f5f5}
+/* 모달 */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:14px;padding:24px;width:90%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:16px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;z-index:999;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.12);white-space:nowrap}
+.toast.success{background:#E8F5E9;color:#2E7D32}
+.toast.error{background:#FFEBEE;color:#C62828}
+.loading{display:flex;align-items:center;gap:8px;color:#888;font-size:14px;padding:16px 0}
+.spinner{width:18px;height:18px;border:2px solid #e5e5e5;border-top-color:#888;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lock-screen{position:fixed;inset:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center;z-index:999}
+.lock-card{background:#fff;border:1px solid #e5e5e5;border-radius:16px;padding:36px 32px;width:90%;max-width:360px;text-align:center}
+.lock-icon{font-size:36px;margin-bottom:12px}
+.lock-title{font-size:17px;font-weight:600;margin-bottom:6px}
+.lock-sub{font-size:13px;color:#888;margin-bottom:24px}
+.lock-input{width:100%;font-size:15px;padding:12px 14px;border:1px solid #e5e5e5;border-radius:10px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit}
+.lock-input:focus{border-color:#aaa}
+.lock-btn{width:100%;margin-top:12px;padding:13px;font-size:15px;font-weight:600;border:none;border-radius:10px;background:#1a1a1a;color:#fff;cursor:pointer}
+.lock-btn:hover{opacity:0.85}
+.lock-error{font-size:13px;color:#c62828;margin-top:10px;min-height:18px}
+@media(max-width:480px){
+  .form-grid{grid-template-columns:1fr}
+  .form-full{grid-column:1}
+  .notif-panel{width:calc(100vw - 32px);right:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="lock-screen" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">🔧</div>
+    <div class="lock-title">카센터 수리 이력 관리</div>
+    <div class="lock-sub">비밀번호를 입력하세요</div>
+    <input type="password" class="lock-input" id="lockInput" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter') checkPassword()" />
+    <div class="lock-error" id="lockError"></div>
+    <button class="lock-btn" onclick="checkPassword()">확인</button>
+  </div>
+</div>
+
+<div class="header">
+  <div class="header-icon">🔧</div>
+  <h1>카센터 수리 이력 관리</h1>
+  <button class="notif-btn" onclick="toggleNotif()" id="notifBtn">
+    🔔 재방문 알림 <span class="notif-badge" id="notifBadge">0</span>
+  </button>
+</div>
+
+<!-- 알림 패널 -->
+<div class="notif-panel" id="notifPanel">
+  <div class="notif-header">
+    재방문 알림
+    <button class="notif-close" onclick="toggleNotif()">✕</button>
+  </div>
+  <div id="notifList"><div class="notif-empty">불러오는 중...</div></div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('search')">🔍 차량 조회</button>
+    <button class="tab" onclick="switchTab('add')">➕ 수리 등록</button>
+    <button class="tab" onclick="switchTab('all')">📋 전체 이력</button>
+  </div>
+
+  <!-- 차량 조회 -->
+  <div id="tab-search" class="section active">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="차량번호 또는 차종 입력 (예: 12가3456, 소나타)" onkeydown="if(event.key==='Enter')doSearch()" />
+      <button onclick="doSearch()">검색</button>
+    </div>
+    <div id="searchResult">
+      <div class="empty-state">차량번호 또는 차종을 입력하세요</div>
+    </div>
+  </div>
+
+  <!-- 수리 등록 -->
+  <div id="tab-add" class="section">
+    <div class="form-card" id="formCard">
+      <div id="formTitle" style="font-size:15px;font-weight:600;margin-bottom:16px">새 수리 내역 등록</div>
+      <div class="vehicle-warn" id="vehicleWarn">⚠️ 이 차량에 다른 고객 정보가 있습니다. 필요시 수정해 주세요.</div>
+      <input type="hidden" id="f-id" />
+      <input type="hidden" id="f-rowIndex" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">차량번호 *</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="f-plate" placeholder="예) 12가3456" style="flex:1;min-width:0" />
+            <button type="button" onclick="openVehicleModal()" style="white-space:nowrap;padding:10px 14px;font-size:13px;font-weight:500;border:1px solid #e5e5e5;border-radius:8px;background:#fff;cursor:pointer;color:#555">🔍 불러오기</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">차종 *</label>
+          <input type="text" id="f-model" placeholder="예) 현대 소나타" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">고객명</label>
+          <input type="text" id="f-name" placeholder="예) 홍길동" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">연락처</label>
+          <input type="text" id="f-phone" placeholder="예) 010-1234-5678" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">수리 날짜 *</label>
+          <input type="date" id="f-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">수리 금액 (원) *</label>
+          <div style="display:flex;gap:8px">
+            <input type="number" id="f-price" placeholder="예) 150000" style="flex:1;min-width:0" />
+            <select id="f-paymethod" style="width:82px;font-size:14px;padding:10px 8px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;outline:none;font-family:inherit">
+              <option value="현금">현금</option>
+              <option value="카드">카드</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">수리 내용 *</label>
+          <textarea id="f-content" placeholder="예) 엔진오일 교체, 에어필터 교체, 브레이크 패드 점검"></textarea>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">추가 확인사항 / 메모</label>
+          <textarea id="f-note" placeholder="예) 다음 방문 시 타이어 교체 필요, 3개월 후 재점검 권유"></textarea>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">재방문 알림 설정</label>
+          <select id="f-revisit">
+            <option value="">설정 안 함</option>
+            <option value="30">1개월 후</option>
+            <option value="60">2개월 후</option>
+            <option value="90">3개월 후</option>
+            <option value="180">6개월 후</option>
+            <option value="365">1년 후</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-save" id="saveBtn" onclick="addRecord()">💾 저장하기</button>
+      <button class="btn-cancel" id="cancelBtn" style="display:none" onclick="cancelEdit()">취소</button>
+    </div>
+  </div>
+
+  <!-- 전체 이력 -->
+  <div id="tab-all" class="section">
+    <div id="statsRow" class="stats-row"></div>
+    <div class="filter-row">
+      <input type="text" id="filterText" placeholder="차량번호, 차종, 수리내용 검색..." oninput="renderAll()" />
+    </div>
+    <div class="filter-row" style="align-items:center">
+      <input type="date" id="filterDateFrom" onchange="renderAll()" style="flex:none" />
+      <span style="font-size:13px;color:#888;white-space:nowrap">~</span>
+      <input type="date" id="filterDateTo" onchange="renderAll()" style="flex:none" />
+      <button onclick="resetDateFilter()" style="white-space:nowrap;padding:9px 14px;font-size:13px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;cursor:pointer;color:#555">초기화</button>
+    </div>
+    <div id="allList"></div>
+  </div>
+</div>
+
+<!-- 차량 검색 모달 -->
+<div class="modal-bg" id="vehicleModal">
+  <div class="modal">
+    <h2>차량 불러오기</h2>
+    <input type="text" id="vehicleSearchInput" placeholder="차량번호 또는 차종 입력..."
+      oninput="renderVehicleModalSearch()"
+      style="width:100%;font-size:14px;padding:10px 12px;border:1px solid #e5e5e5;border-radius:8px;outline:none;margin-bottom:12px;font-family:inherit" />
+    <div id="vehicleSearchList" style="max-height:320px;overflow-y:auto;border:1px solid #f0f0f0;border-radius:8px"></div>
+    <button onclick="closeVehicleModal()" class="btn-cancel" style="margin-top:12px">닫기</button>
+  </div>
+</div>
+
+<!-- 삭제 확인 모달 -->
+<div class="modal-bg" id="delModal">
+  <div class="modal">
+    <h2>수리 내역 삭제</h2>
+    <p style="font-size:14px;color:#555;line-height:1.6;margin-bottom:20px">이 수리 내역을 삭제하면 구글 시트에서도 삭제됩니다.<br>계속하시겠어요?</p>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeDelModal()" style="flex:1;padding:11px;border:1px solid #e5e5e5;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">취소</button>
+      <button onclick="confirmDelete()" style="flex:1;padding:11px;border:none;border-radius:8px;background:#c62828;color:#fff;cursor:pointer;font-size:14px;font-weight:600">삭제</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkPassword(){
+  const val = document.getElementById('lockInput').value;
+  if(!val){ document.getElementById('lockError').textContent = '비밀번호를 입력해주세요.'; return; }
+  const hash = await sha256(val);
+  if(hash === PW_HASH){
+    document.getElementById('lockScreen').style.display = 'none';
+  } else {
+    document.getElementById('lockError').textContent = '비밀번호가 올바르지 않습니다.';
+    document.getElementById('lockInput').value = '';
+    document.getElementById('lockInput').focus();
+  }
+}
+
+let records = [];
+let loaded = false;
+let deleteTargetId = null;
+let editMode = false;
+
+// 날짜 포맷 정규화: 어떤 형태든 YYYY-MM-DD로 변환
+function fmtDate(val){
+  if(!val) return '';
+  const s = String(val);
+  // 이미 YYYY-MM-DD 형태면 그대로
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // ISO 문자열 또는 Date 객체 형태면 파싱
+  const d = new Date(s);
+  if(isNaN(d)) return s;
+  // UTC 기준으로 날짜만 추출 (시간대 오프셋 보정)
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth()+1).padStart(2,'0');
+  const dd = String(d.getUTCDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3000);
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', ['search','add','all'][i] === t));
+  document.querySelectorAll('.section').forEach((s,i) => s.classList.toggle('active', ['tab-search','tab-add','tab-all'][i] === 'tab-'+t));
+  if(t === 'all'){ if(!loaded) fetchAll(true); else renderAll(); }
+  if(t === 'search' && !loaded) fetchAll(false);
+  if(t === 'add' && !editMode) resetForm();
+}
+
+function fetchAll(renderAfter){
+  return fetch(API + '?action=list')
+    .then(r => r.json())
+    .then(data => {
+      records = Array.isArray(data) ? data.map(r => ({...r, date: fmtDate(r.date)})) : [];
+      loaded = true;
+      updateNotifBadge();
+      if(renderAfter) renderAll();
+    })
+    .catch(err => showToast('데이터 불러오기 실패: ' + err.message, 'error'));
+}
+
+/* ── 검색 ── */
+function doSearch(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const el = document.getElementById('searchResult');
+  if(!q){ el.innerHTML = '<div class="empty-state">차량번호 또는 차종을 입력하세요</div>'; return; }
+  if(!loaded){
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>데이터 불러오는 중...</div>';
+    fetchAll(false).then(() => renderSearch(q));
+    return;
+  }
+  renderSearch(q);
+}
+
+function renderSearch(q){
+  const el = document.getElementById('searchResult');
+  const matches = records.filter(r => String(r.plate||'').toLowerCase().includes(q) || String(r.model||'').toLowerCase().includes(q));
+  if(!matches.length){ el.innerHTML = '<div class="empty-state">검색 결과가 없습니다</div>'; return; }
+  const grouped = {};
+  matches.forEach(r => {
+    const k = String(r.plate);
+    if(!grouped[k]) grouped[k] = {plate:r.plate, model:r.model, name:r.name, phone:r.phone, items:[]};
+    grouped[k].items.push(r);
+  });
+  el.innerHTML = Object.values(grouped).map(g => {
+    const sorted = g.items.sort((a,b) => new Date(b.date) - new Date(a.date));
+    const total = sorted.reduce((s,r) => s + Number(r.price||0), 0);
+    return `<div class="car-card">
+      <div class="car-header">
+        <span class="car-badge">${g.plate}</span>
+        <div>
+          <div class="car-model">${g.model}</div>
+          <div class="car-meta">${g.name||''}${g.phone?' · '+g.phone:''} · 총 ${sorted.length}회 방문 · 누적 ${total.toLocaleString()}원</div>
+        </div>
+      </div>
+      <div class="repair-list">
+        ${sorted.map(r => repairItemHTML(r)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function payBadge(p){ return p ? `<span class="pay-badge ${p==='카드'?'pay-card':'pay-cash'}">${p}</span>` : ''; }
+
+function repairItemHTML(r){
+  const revisitLabel = r.revisit ? `<span style="font-size:11px;background:#FFF3E0;color:#e65100;padding:2px 7px;border-radius:5px;margin-left:6px">🔔 ${r.revisit}일 후 재방문</span>` : '';
+  return `<div class="repair-item">
+    <div class="repair-row">
+      <span class="repair-date">${r.date}${revisitLabel}</span>
+      <span class="repair-content">${r.content}</span>
+      <span class="repair-price">${Number(r.price||0).toLocaleString()}원${payBadge(r.paymethod)}</span>
+    </div>
+    ${r.note ? `<div class="repair-note">📌 ${r.note}</div>` : ''}
+    <div class="repair-actions">
+      <button class="btn-edit" onclick="startEdit('${r.id}')">✏️ 수정</button>
+      <button class="btn-del" onclick="openDelModal('${r.id}')">🗑 삭제</button>
+    </div>
+  </div>`;
+}
+
+/* ── 등록/수정 ── */
+function encode(v){ return encodeURIComponent(String(v||'')); }
+
+function resetForm(){
+  editMode = false;
+  document.getElementById('f-id').value = '';
+  document.getElementById('f-rowIndex').value = '';
+  document.getElementById('formTitle').textContent = '새 수리 내역 등록';
+  ['f-plate','f-model','f-name','f-phone','f-price','f-content','f-note'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f-revisit').value = '';
+  document.getElementById('f-paymethod').value = '현금';
+  document.getElementById('saveBtn').textContent = '💾 저장하기';
+  document.getElementById('cancelBtn').style.display = 'none';
+  document.getElementById('vehicleWarn').style.display = 'none';
+}
+
+/* ── 차량 불러오기 모달 ── */
+function openVehicleModal(){
+  if(!loaded) fetchAll(false);
+  document.getElementById('vehicleSearchInput').value = '';
+  renderVehicleModalSearch();
+  document.getElementById('vehicleModal').classList.add('open');
+  setTimeout(() => document.getElementById('vehicleSearchInput').focus(), 100);
+}
+
+function closeVehicleModal(){
+  document.getElementById('vehicleModal').classList.remove('open');
+}
+
+function renderVehicleModalSearch(){
+  const q = document.getElementById('vehicleSearchInput').value.trim().toLowerCase();
+  const el = document.getElementById('vehicleSearchList');
+
+  // 차량번호 기준으로 그룹핑, 각 차량의 최근 기록 대표로 사용
+  const grouped = {};
+  records.forEach(r => {
+    const k = String(r.plate||'');
+    if(!k) return;
+    if(!grouped[k] || new Date(r.date) > new Date(grouped[k].latestDate)){
+      grouped[k] = {
+        plate: r.plate, model: r.model, name: r.name, phone: r.phone,
+        latestDate: r.date,
+        allNames: new Set()
+      };
+    }
+    grouped[k].allNames.add(String(r.name||'').trim());
+  });
+
+  // 검색어 필터
+  let list = Object.values(grouped).filter(v => {
+    if(!q) return true;
+    return String(v.plate||'').toLowerCase().includes(q) || String(v.model||'').toLowerCase().includes(q);
+  }).sort((a,b) => new Date(b.latestDate) - new Date(a.latestDate));
+
+  if(!list.length){
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;font-size:13px">검색 결과가 없습니다</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(v => `
+    <div class="vehicle-search-item" onclick="selectVehicle('${v.plate}')">
+      <div>
+        <span class="vehicle-search-plate">${v.plate}</span>
+        <div class="vehicle-search-info">${v.model}${v.name?' · '+v.name:''}${v.phone?' · '+v.phone:''}</div>
+      </div>
+      <span class="vehicle-search-date">${v.latestDate}</span>
+    </div>
+  `).join('');
+}
+
+function selectVehicle(plate){
+  // 해당 차량의 전체 기록을 날짜 내림차순 정렬
+  const vehicleRecords = records
+    .filter(r => String(r.plate) === String(plate))
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+  if(!vehicleRecords.length) return;
+
+  const latest = vehicleRecords[0];
+  closeVehicleModal();
+  switchTab('add'); // resetForm() 이 내부에서 호출될 수 있으므로 값 세팅 전에 먼저 실행
+
+  document.getElementById('f-plate').value = latest.plate || '';
+  document.getElementById('f-model').value = latest.model || '';
+  document.getElementById('f-name').value  = latest.name  || '';
+  document.getElementById('f-phone').value = latest.phone || '';
+
+  // 같은 차량에 이름/전화가 다른 기록이 있으면 안내 표시
+  const uniqueCustomers = new Set(vehicleRecords.map(r => `${r.name||''}|${r.phone||''}`));
+  const warn = document.getElementById('vehicleWarn');
+  warn.style.display = uniqueCustomers.size > 1 ? 'block' : 'none';
+}
+
+function cancelEdit(){
+  resetForm();
+  showToast('수정을 취소했습니다.');
+}
+
+function startEdit(id){
+  const r = records.find(x => String(x.id) === String(id));
+  if(!r) return;
+  editMode = true;
+  switchTab('add');
+  document.getElementById('formTitle').textContent = '수리 내역 수정';
+  document.getElementById('f-id').value = r.id;
+  document.getElementById('f-rowIndex').value = r._row || '';
+  document.getElementById('f-plate').value = r.plate || '';
+  document.getElementById('f-model').value = r.model || '';
+  document.getElementById('f-name').value = r.name || '';
+  document.getElementById('f-phone').value = r.phone || '';
+  document.getElementById('f-date').value = r.date || '';
+  document.getElementById('f-price').value = r.price || '';
+  document.getElementById('f-paymethod').value = r.paymethod || '현금';
+  document.getElementById('f-content').value = r.content || '';
+  document.getElementById('f-note').value = r.note || '';
+  document.getElementById('f-revisit').value = r.revisit || '';
+  document.getElementById('saveBtn').textContent = '✅ 수정 완료';
+  document.getElementById('cancelBtn').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function addRecord(){
+  const plate   = document.getElementById('f-plate').value.trim();
+  const model   = document.getElementById('f-model').value.trim();
+  const date    = document.getElementById('f-date').value;
+  const price   = document.getElementById('f-price').value;
+  const content = document.getElementById('f-content').value.trim();
+  if(!plate||!model||!date||!price||!content){ showToast('필수 항목(*)을 모두 입력해주세요.','error'); return; }
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '저장 중...';
+
+  const id      = editMode ? document.getElementById('f-id').value : Date.now();
+  const rowIndex= document.getElementById('f-rowIndex').value;
+  const name    = document.getElementById('f-name').value.trim();
+  const phone   = document.getElementById('f-phone').value.trim();
+  const note     = document.getElementById('f-note').value.trim();
+  const revisit  = document.getElementById('f-revisit').value;
+  const paymethod= document.getElementById('f-paymethod').value;
+  const action   = editMode ? 'update' : 'save';
+
+  const url = `${API}?action=${action}&id=${encode(id)}&rowIndex=${encode(rowIndex)}&plate=${encode(plate)}&model=${encode(model)}&name=${encode(name)}&phone=${encode(phone)}&date=${encode(date)}&price=${encode(price)}&paymethod=${encode(paymethod)}&content=${encode(content)}&note=${encode(note)}&revisit=${encode(revisit)}`;
+
+  fetch(url)
+    .then(r => r.json())
+    .then(res => {
+      if(res.status === 'ok'){
+        if(editMode){
+          const idx = records.findIndex(x => String(x.id) === String(id));
+          if(idx !== -1) records[idx] = {id, plate, model, name, phone, date, price, paymethod, content, note, revisit, _row: rowIndex};
+          showToast('✓ 수정되었습니다!');
+        } else {
+          records.push({id, plate, model, name, phone, date, price, paymethod, content, note, revisit});
+          showToast('✓ 구글 시트에 저장되었습니다!');
+        }
+        updateNotifBadge();
+        resetForm();
+      } else {
+        showToast('저장 실패: ' + JSON.stringify(res), 'error');
+      }
+    })
+    .catch(err => showToast('오류: ' + err.message, 'error'))
+    .finally(() => { btn.disabled = false; btn.textContent = editMode ? '✅ 수정 완료' : '💾 저장하기'; });
+}
+
+/* ── 삭제 ── */
+function openDelModal(id){
+  deleteTargetId = id;
+  document.getElementById('delModal').classList.add('open');
+}
+function closeDelModal(){
+  deleteTargetId = null;
+  document.getElementById('delModal').classList.remove('open');
+}
+function confirmDelete(){
+  if(!deleteTargetId) return;
+  const r = records.find(x => String(x.id) === String(deleteTargetId));
+  if(!r){ closeDelModal(); return; }
+  const url = `${API}?action=delete&id=${encode(r.id)}&rowIndex=${encode(r._row||'')}`;
+  fetch(url)
+    .then(res => res.json())
+    .then(res => {
+      if(res.status === 'ok'){
+        records = records.filter(x => String(x.id) !== String(deleteTargetId));
+        showToast('삭제되었습니다.');
+        updateNotifBadge();
+        const q = document.getElementById('searchInput').value.trim().toLowerCase();
+        if(q) renderSearch(q);
+        if(document.getElementById('tab-all').classList.contains('active')) renderAll();
+      } else {
+        showToast('삭제 실패: ' + JSON.stringify(res), 'error');
+      }
+    })
+    .catch(err => showToast('오류: ' + err.message, 'error'))
+    .finally(() => closeDelModal());
+}
+
+/* ── 재방문 알림 ── */
+function getRevisitAlerts(){
+  const dismissed = getDismissedRevisits();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const alerts = [];
+  records.forEach(r => {
+    if(!r.revisit || !r.date) return;
+    if(dismissed.includes(String(r.id))) return;
+    const repairDate = new Date(r.date);
+    const dueDate = new Date(repairDate);
+    dueDate.setDate(dueDate.getDate() + Number(r.revisit));
+    const diffMs = dueDate - today;
+    const diffDays = Math.ceil(diffMs / (1000*60*60*24));
+    if(diffDays <= 14) alerts.push({...r, dueDate, diffDays});
+  });
+  return alerts.sort((a,b) => a.diffDays - b.diffDays);
+}
+
+function updateNotifBadge(){
+  const alerts = getRevisitAlerts();
+  const badge = document.getElementById('notifBadge');
+  if(alerts.length > 0){
+    badge.textContent = alerts.length;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function toggleNotif(){
+  const panel = document.getElementById('notifPanel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')) renderNotif();
+}
+
+function renderNotif(){
+  const alerts = getRevisitAlerts();
+  const el = document.getElementById('notifList');
+  if(!alerts.length){ el.innerHTML = '<div class="notif-empty">14일 이내 재방문 예정 차량이 없습니다 ✅</div>'; return; }
+  el.innerHTML = alerts.map(a => {
+    const label = a.diffDays < 0 ? `${Math.abs(a.diffDays)}일 지남` : a.diffDays === 0 ? '오늘' : `${a.diffDays}일 후`;
+    const cls = a.diffDays <= 0 ? 'overdue' : 'soon';
+    const due = a.dueDate.toISOString().slice(0,10);
+    return `<div class="notif-item">
+      <div class="notif-item-top">
+        <span class="notif-plate">${a.plate}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="notif-days ${cls}">${label}</span>
+          <button class="notif-dismiss" onclick="dismissRevisit('${a.id}')">해제</button>
+        </div>
+      </div>
+      <div class="notif-name">${a.model}${a.name?' · '+a.name:''}</div>
+      <div class="notif-desc">재방문 예정일: ${due} · ${a.content}</div>
+    </div>`;
+  }).join('');
+}
+
+function getDismissedRevisits(){
+  return JSON.parse(localStorage.getItem('dismissedRevisits') || '[]');
+}
+
+function dismissRevisit(id){
+  const dismissed = getDismissedRevisits();
+  if(!dismissed.includes(String(id))){
+    dismissed.push(String(id));
+    localStorage.setItem('dismissedRevisits', JSON.stringify(dismissed));
+  }
+  updateNotifBadge();
+  renderNotif();
+  showToast('재방문 알림이 해제되었습니다.');
+}
+
+/* ── 전체 이력 ── */
+function resetDateFilter(){
+  document.getElementById('filterDateFrom').value = '';
+  document.getElementById('filterDateTo').value = '';
+  renderAll();
+}
+
+function renderAll(){
+  const q      = document.getElementById('filterText').value.toLowerCase();
+  const from   = document.getElementById('filterDateFrom').value;
+  const to     = document.getElementById('filterDateTo').value;
+  let filtered = records.filter(r => {
+    const textOk = !q || (String(r.plate||'')+String(r.model||'')+String(r.content||'')+String(r.note||'')).toLowerCase().includes(q);
+    const dateOk = (!from || r.date >= from) && (!to || r.date <= to);
+    return textOk && dateOk;
+  }).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  const total = filtered.reduce((s,r) => s + Number(r.price||0), 0);
+  const plates = new Set(filtered.map(r => r.plate));
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${filtered.length}</div><div class="stat-label">수리 건수</div></div>
+    <div class="stat-card"><div class="stat-num">${plates.size}</div><div class="stat-label">차량 수</div></div>
+    <div class="stat-card"><div class="stat-num">${parseFloat((total/10000).toFixed(1))}만원</div><div class="stat-label">총 매출</div></div>
+  `;
+
+  if(!filtered.length){ document.getElementById('allList').innerHTML = '<div class="empty-state">해당하는 수리 내역이 없습니다</div>'; return; }
+  document.getElementById('allList').innerHTML = filtered.map(r => `
+    <div class="all-item">
+      <div class="all-item-left">
+        <span class="all-item-plate">${r.plate}</span>
+        <span class="all-item-model">${r.model}</span>
+      </div>
+      <div class="all-item-body">
+        <div class="all-item-date">${r.date}${r.name?' · '+r.name:''}</div>
+        <div class="all-item-title">${r.content}</div>
+        ${r.note?`<div class="all-item-note">📌 ${r.note}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="all-item-price">${Number(r.price||0).toLocaleString()}원${payBadge(r.paymethod)}</div>
+        <div style="display:flex;gap:4px">
+          <button class="btn-edit" onclick="startEdit('${r.id}')">✏️ 수정</button>
+          <button class="btn-del" onclick="openDelModal('${r.id}')">🗑 삭제</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notifPanel');
+  const btn = document.getElementById('notifBtn');
+  if(panel.classList.contains('open') && !panel.contains(e.target) && !btn.contains(e.target)){
+    panel.classList.remove('open');
+  }
+  const vehicleModal = document.getElementById('vehicleModal');
+  if(vehicleModal.classList.contains('open') && e.target === vehicleModal){
+    closeVehicleModal();
+  }
+});
+</script>
+</body>
+</html>
