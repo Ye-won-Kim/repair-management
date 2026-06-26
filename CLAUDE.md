@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Files
 
-- `카센터관리.html` — 프론트엔드 전체 (HTML + CSS + JS 단일 파일)
+- `repair-management.html` — 프론트엔드 전체 (HTML + CSS + JS 단일 파일)
 - Apps Script 코드는 Google 서버에서 관리되며, 이 저장소에는 없음. 변경 사항은 사용자가 직접 Google Apps Script 에디터에 붙여넣고 재배포함
 
 ## Architecture
